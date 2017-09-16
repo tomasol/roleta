@@ -9,33 +9,42 @@ import socket
 DISREGARD_FIRST_PUSHED_MILLIS = 100
 UDP_IP = "127.0.0.1"
 UDP_PORT = 5005
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-btn = int(sys.argv[1])
 
-def send(message):
+DEFAULT_IDX = (17, 22)
+
+def send(message, btnId, sock):
+    message = "[%d]%s" % (btnId, message)
     print "Sending %s" % message
     sock.sendto(message, (UDP_IP, UDP_PORT))
 
-def btn_down():
-    send("btn_down %d" % btn)
+def btn_down(btnId, sock):
+    send("btn_down", btnId, sock)
 
-def btn_up(after_millis):
-    send("btn_up %d %d" % (btn, after_millis))
-
+def btn_up(after_millis, btnId, sock):
+    send("btn_up %d" % after_millis, btnId, sock)
 
 def main():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+    btnId = int(sys.argv[1])
+    if btnId < 0 or btnId > 1:
+        print "Invalid id %s" % btnId
+        sys.exit(1)
+    btn = DEFAULT_IDX[btnId]
+    if len(sys.argv) == 3:
+        btn = int(sys.argv[2])
+        if btn < 1 or btn > 40:
+            print "Invalid index %s" % index
+            sys.exit(1)
+    print "Id %d uses pin index %d" % (btnId, btn)
     just_pushed=False
     pushed_millis=0
-    if btn < 1 or btn > 40:
-        print "Invalid index"
-        exit
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(btn, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     try:
         while 1:
             if GPIO.input(btn): # button is released
                 if pushed_millis > DISREGARD_FIRST_PUSHED_MILLIS:
-                    btn_up(pushed_millis)
+                    btn_up(pushed_millis, btnId, sock)
                 pushed_millis = 0
                 just_pushed = False
             else:
@@ -43,7 +52,7 @@ def main():
                 if pushed_millis > DISREGARD_FIRST_PUSHED_MILLIS and just_pushed == False:
                     # start push action
                     just_pushed = True
-                    btn_down()
+                    btn_down(btnId, sock)
             time.sleep(0.001)
     except KeyboardInterrupt:
         print "Shutdown requested...exiting"
