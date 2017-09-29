@@ -5,17 +5,29 @@ import RPi.GPIO as GPIO
 import sys
 import traceback
 import socket
+import time
 
 UDP_IP = "127.0.0.1"
 UDP_PORT = 5005
+MIN_EVENT_DURATION_MILLIS=1000
 
+# mutable state
+last_event_millis=0
+
+def current_time_millis():
+    return int(round(time.time() * 1000))
+
+def log(message, tuple):
+    message2 = "%d " + message
+    tuple2 = (current_time_millis(),) + tuple
+    print message2 % tuple2
 
 def btn_down(id, leds):
-    print "[%d]btn_down" % id
+    log("[%d]btn_down",  (id,))
     GPIO.output(leds[id], GPIO.HIGH)
 
 def btn_up(id, leds, millis):
-    print "[%d]btn_up %d" % (id, millis)
+    log("[%d]btn_up %d", (id, millis))
     GPIO.output(leds[id], GPIO.LOW)
 
 def process_message_with_id(id, leds, message):
@@ -26,7 +38,7 @@ def process_message_with_id(id, leds, message):
         millis = int(message[len("btn_up "):])
         btn_up(id, leds, millis)
     else:
-        print "Got unknown message %s from %d" % (message,id)
+        log("Got unknown message %s from %d", (message,id))
 
 def process_message(message, leds):
     if message.startswith("[0]"):
@@ -34,7 +46,7 @@ def process_message(message, leds):
     elif message.startswith("[1]"):
         process_message_with_id(1, leds, message[3:])
     else:
-        print "Unknown message %s" % message
+        log("Unknown message %s", (message,))
 
 def check_idx(idx):
     if idx < 1 or idx > 40:

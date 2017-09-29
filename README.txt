@@ -1,0 +1,7 @@
+Buttons:
+0=GPIO17=PIN11=red
+1=GPIO22=PIN15=blue
+
+LEDs:
+0=GPIO18=PIN12=yellow
+1=GPIO23=PIN16=green
