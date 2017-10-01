@@ -9,6 +9,7 @@ import socket
 DISREGARD_FIRST_PUSHED_MILLIS = 100
 UDP_IP = "127.0.0.1"
 UDP_PORT = 5005
+HEARTBEAT_MILLIS = 100
 
 DEFAULT_IDX = (17, 22)
 
@@ -38,6 +39,7 @@ def main():
     print "Id %d uses pin index %d" % (btnId, btn)
     just_pushed=False
     pushed_millis=0
+    last_message_millis = 0
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(btn, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     try:
@@ -53,6 +55,10 @@ def main():
                     # start push action
                     just_pushed = True
                     btn_down(btnId, sock)
+            last_message_millis = last_message_millis + 1
+            if last_message_millis > HEARTBEAT_MILLIS:
+                last_message_millis = 0
+                sock.sendto("", (UDP_IP, UDP_PORT))
             time.sleep(0.001)
     except KeyboardInterrupt:
         print "Shutdown requested...exiting"

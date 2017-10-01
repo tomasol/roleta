@@ -1,3 +1,5 @@
+Vcc=GPIO14=PIN06
+
 Buttons:
 0=GPIO17=PIN11=red
 1=GPIO22=PIN15=blue
