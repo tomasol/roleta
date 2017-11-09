@@ -4,25 +4,13 @@ import RPi.GPIO as GPIO
 import sys
 import traceback
 import socket
+import udpclient
 
 # constants
 DISREGARD_FIRST_PUSHED_MILLIS = 100
-UDP_IP = "127.0.0.1"
-UDP_PORT = 5005
 HEARTBEAT_MILLIS = 100
 
 DEFAULT_IDX = (17, 22)
-
-def send(message, btnId, sock):
-    message = "[%d]%s" % (btnId, message)
-    print "Sending %s" % message
-    sock.sendto(message, (UDP_IP, UDP_PORT))
-
-def btn_down(btnId, sock):
-    send("btn_down", btnId, sock)
-
-def btn_up(after_millis, btnId, sock):
-    send("btn_up %d" % after_millis, btnId, sock)
 
 def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
@@ -46,7 +34,7 @@ def main():
         while 1:
             if GPIO.input(btn): # button is released
                 if pushed_millis > DISREGARD_FIRST_PUSHED_MILLIS:
-                    btn_up(pushed_millis, btnId, sock)
+                    udpclient.btn_up(pushed_millis, btnId, sock)
                 pushed_millis = 0
                 just_pushed = False
             else:
@@ -54,11 +42,11 @@ def main():
                 if pushed_millis > DISREGARD_FIRST_PUSHED_MILLIS and just_pushed == False:
                     # start push action
                     just_pushed = True
-                    btn_down(btnId, sock)
+                    udpclient.btn_down(btnId, sock)
             last_message_millis = last_message_millis + 1
             if last_message_millis > HEARTBEAT_MILLIS:
                 last_message_millis = 0
-                sock.sendto("", (UDP_IP, UDP_PORT))
+                udpclient.send_heartbeat(sock)
             time.sleep(0.001)
     except KeyboardInterrupt:
         print "Shutdown requested...exiting"
